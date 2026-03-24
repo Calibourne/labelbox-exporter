@@ -83,11 +83,14 @@ def fetch_exported_annotations(selected_project, selected_statuses):
             workflow_statuses = [_extract_workflow_status(item) for item in parsed_data]
             
             # Map of normalized status names to original status names found
-            # This helps if API returns "DONE" but we expect "Done"
+            # This helps if API returns "DONE" but we expect "Done",
+            # or "TO_LABEL" but we expect "ToLabel".
             raw_to_norm = {}
             for raw in set(workflow_statuses):
+                raw_clean = raw.lower().replace("_", "")
                 for norm in STATUS_ORDER:
-                    if raw.lower() == norm.lower():
+                    norm_clean = norm.lower().replace("_", "")
+                    if raw_clean == norm_clean:
                         raw_to_norm[raw] = norm
                         break
                 if raw not in raw_to_norm:
