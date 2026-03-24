@@ -33,7 +33,14 @@ def _extract_workflow_status(item):
     return 'unknown'
 
 def fetch_exported_annotations(selected_project, selected_statuses):
-    filters = {"workflow_status": selected_statuses} if selected_statuses else {}
+    # Labelbox workflow_status filter only supports a single string, not a list.
+    # If exactly one status is selected, we use it as a filter.
+    # Otherwise, we fetch all and filter locally to support multi-status selection.
+    api_filter_value = None
+    if selected_statuses and len(selected_statuses) == 1:
+        api_filter_value = selected_statuses[0]
+    
+    filters = {"workflow_status": api_filter_value} if api_filter_value else {}
 
     with st.spinner("Fetching annotations..."):
         try:
@@ -75,6 +82,17 @@ def fetch_exported_annotations(selected_project, selected_statuses):
 
             # Extract workflow_status per row (index-aligned)
             workflow_statuses = [_extract_workflow_status(item) for item in parsed_data]
+
+            # If we fetched all because multiple statuses were selected, filter locally now
+            if not api_filter_value and selected_statuses:
+                filtered_indices = [i for i, status in enumerate(workflow_statuses) if status in selected_statuses]
+                parsed_data = [parsed_data[i] for i in filtered_indices]
+                workflow_statuses = [workflow_statuses[i] for i in filtered_indices]
+
+            if not parsed_data:
+                st.warning("No annotations found matching the selected statuses.")
+                st.session_state['fetch_triggered'] = False
+                return
 
             df = process_exported_data(parsed_data)
             df['workflow_status'] = workflow_statuses
