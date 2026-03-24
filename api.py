@@ -34,8 +34,6 @@ def _extract_workflow_status(item):
 
 def fetch_exported_annotations(selected_project, selected_statuses):
     # Labelbox workflow_status filter only supports a single string, not a list.
-    # If exactly one status is selected, we use it as a filter.
-    # Otherwise, we fetch all and filter locally to support multi-status selection.
     api_filter_value = None
     if selected_statuses and len(selected_statuses) == 1:
         api_filter_value = selected_statuses[0]
@@ -81,25 +79,53 @@ def fetch_exported_annotations(selected_project, selected_statuses):
                     continue
 
             # Extract workflow_status per row (index-aligned)
+            # Use case-insensitive matching for local filter to be safe
             workflow_statuses = [_extract_workflow_status(item) for item in parsed_data]
+            
+            # Map of normalized status names to original status names found
+            # This helps if API returns "DONE" but we expect "Done"
+            raw_to_norm = {}
+            for raw in set(workflow_statuses):
+                for norm in STATUS_ORDER:
+                    if raw.lower() == norm.lower():
+                        raw_to_norm[raw] = norm
+                        break
+                if raw not in raw_to_norm:
+                    raw_to_norm[raw] = raw # keep original if no match
+
+            # Update workflow_statuses to use normalized names where possible
+            workflow_statuses = [raw_to_norm.get(s, s) for s in workflow_statuses]
+
+            # Debugging output to help the user identify why results might be empty
+            with st.expander("🔍 Debug: Workflow Statuses Found"):
+                st.write(f"Total rows fetched: {len(parsed_data)}")
+                st.write(f"Workflow statuses found (normalized): {set(workflow_statuses)}")
+                st.write(f"Expected statuses for filtering: {selected_statuses}")
+                if parsed_data:
+                    st.write("First row projects data sample:")
+                    st.write(parsed_data[0].get('projects', {}))
 
             # If we fetched all because multiple statuses were selected, filter locally now
             if not api_filter_value and selected_statuses:
+                # Local filter: match normalized names
                 filtered_indices = [i for i, status in enumerate(workflow_statuses) if status in selected_statuses]
                 parsed_data = [parsed_data[i] for i in filtered_indices]
                 workflow_statuses = [workflow_statuses[i] for i in filtered_indices]
 
             if not parsed_data:
-                st.warning("No annotations found matching the selected statuses.")
+                st.warning("No annotations found matching the selected statuses. Check the Debug expander above for what was found.")
                 st.session_state['fetch_triggered'] = False
                 return
 
             df = process_exported_data(parsed_data)
             df['workflow_status'] = workflow_statuses
 
-            # Save to session state in correct order
-            unique_statuses = df['workflow_status'].unique()
-            st.session_state['fetched_statuses'] = [s for s in STATUS_ORDER if s in unique_statuses]
+            # Save to session state in correct order, including any unknown ones found
+            unique_found = set(df['workflow_status'].unique())
+            st.session_state['fetched_statuses'] = [s for s in STATUS_ORDER if s in unique_found]
+            # Add any statuses that aren't in STATUS_ORDER to the end
+            st.session_state['fetched_statuses'] += [s for s in unique_found if s not in STATUS_ORDER]
+            
             st.session_state['exported_df'] = df
             st.session_state['export_url'] = export_url
             st.session_state['fetch_triggered'] = False

@@ -68,19 +68,19 @@ def export_controls_ui(selected_project):
     st.header("① Fetched")
     status_counts = df['workflow_status'].value_counts()
     
-    # Filter STATUS_MAP order to only those present in fetched_statuses
-    display_statuses = [s for s in STATUS_MAP if s in fetched_statuses]
+    # Display metrics for all fetched statuses in the order they appear in fetched_statuses
+    display_statuses = fetched_statuses
     
     cols = st.columns(len(display_statuses) + 1)
     for i, status in enumerate(display_statuses):
-        cols[i].metric(STATUS_MAP[status], status_counts.get(status, 0))
+        cols[i].metric(STATUS_MAP.get(status, status), status_counts.get(status, 0))
     cols[-1].metric("Total", len(df))
 
     st.header("② Preview & Filter")
     active_filters = st.pills(
         "Filter by status:",
         options=fetched_statuses,
-        format_func=STATUS_MAP.get,
+        format_func=lambda x: STATUS_MAP.get(x, x),
         selection_mode="multi",
         default=fetched_statuses
     )
