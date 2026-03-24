@@ -19,3 +19,4 @@ ENV/
 
 # OS
 .DS_Store
+.venv/
