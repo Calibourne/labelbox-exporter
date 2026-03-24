@@ -65,7 +65,7 @@ def export_controls_ui(selected_project):
     df = st.session_state['exported_df']
     fetched_statuses = st.session_state.get('fetched_statuses', [])
 
-    st.header("① Fetched")
+    st.header("Fetched")
     status_counts = df['workflow_status'].value_counts()
     
     # Display metrics for all fetched statuses in the order they appear in fetched_statuses
@@ -76,7 +76,7 @@ def export_controls_ui(selected_project):
         cols[i].metric(STATUS_MAP.get(status, status), status_counts.get(status, 0))
     cols[-1].metric("Total", len(df))
 
-    st.header("② Preview & Filter")
+    st.header("Preview & Filter")
     active_filters = st.pills(
         "Filter by status:",
         options=fetched_statuses,
@@ -89,7 +89,7 @@ def export_controls_ui(selected_project):
     st.write(f"Showing {len(filtered_df)} rows")
     st.dataframe(filtered_df.head(10), use_container_width=True, hide_index=True)
 
-    st.header("③ Export")
+    st.header("Export")
     st.write(f"Exporting {len(filtered_df)} rows")
     
     col1, col2 = st.columns([1, 2])
