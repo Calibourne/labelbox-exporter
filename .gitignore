@@ -1,0 +1,21 @@
+# Secrets
+labelboxAPIkey.json
+
+# Data
+export-result.ndjson
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+env/
+venv/
+ENV/
+
+# Tooling
+.claude/
+.superpowers/
+
+# OS
+.DS_Store
