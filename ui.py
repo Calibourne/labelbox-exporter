@@ -87,7 +87,7 @@ def export_controls_ui(selected_project):
     
     filtered_df = df[df['workflow_status'].isin(active_filters)]
     st.write(f"Showing {len(filtered_df)} rows")
-    st.dataframe(filtered_df.head(10), use_container_width=True)
+    st.dataframe(filtered_df.head(10), use_container_width=True, hide_index=True)
 
     st.header("③ Export")
     st.write(f"Exporting {len(filtered_df)} rows")
@@ -111,6 +111,13 @@ def export_controls_ui(selected_project):
         if skip_count:
             st.warning(f"{skip_count} annotation(s) were skipped due to errors during YOLO normalization.")
         
+        # Keep only external_id and annotations_yolo for a clean preview
+        preview_cols = ['external_id', 'annotations_yolo']
+        available_preview_cols = [c for c in preview_cols if c in norm_df.columns]
+        
+        st.subheader("YOLO Preview")
+        st.dataframe(norm_df[available_preview_cols].head(10), use_container_width=True, hide_index=True)
+
         yaml_info = {
             'nc': len(class_map.keys()),
             'names': list(class_map.keys())
