@@ -110,8 +110,16 @@ def fetch_exported_annotations(selected_project, selected_statuses):
 
             # If we fetched all because multiple statuses were selected, filter locally now
             if not api_filter_value and selected_statuses:
-                # Local filter: match normalized names
-                filtered_indices = [i for i, status in enumerate(workflow_statuses) if status in selected_statuses]
+                # Normalize both sides for comparison to handle case-insensitivity and underscores
+                sel_norm = [s.lower().replace("_", "") for s in selected_statuses]
+                filtered_indices = [i for i, status in enumerate(workflow_statuses) if status.lower().replace("_", "") in sel_norm]
+                
+                with st.expander("🔍 Debug: Filtering Details"):
+                    st.write(f"Selected (raw): {selected_statuses}")
+                    st.write(f"Selected (normalized for check): {sel_norm}")
+                    st.write(f"Before filter: {len(parsed_data)} rows")
+                    st.write(f"After filter: {len(filtered_indices)} rows")
+
                 parsed_data = [parsed_data[i] for i in filtered_indices]
                 workflow_statuses = [workflow_statuses[i] for i in filtered_indices]
 

@@ -5,11 +5,7 @@ STATUS_MAP = {
     "Done": "Done",
     "InReview": "In Review",
     "InRework": "In Rework",
-    "ToLabel": "To Label",
-    "DONE": "Done",
-    "IN_REVIEW": "In Review",
-    "IN_REWORK": "In Rework",
-    "TO_LABEL": "To Label"
+    "ToLabel": "To Label"
 }
 
 def sidebar_ui():
